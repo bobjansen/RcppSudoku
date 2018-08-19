@@ -190,7 +190,63 @@ sudoku <- as.matrix(
 
 ## Some benchmarking
 
-Benchmarking not so easy due to recursion.
+Benchmarking using profvis is not so easy due to recursion but Rprof in base
+works fine:
+
+```{r, eval = FALSE}
+Rprof(tmp <- tempfile())
+solve(sudoku, findChoices)
+Rprof()
+summaryRprof(tmp)
+```
+
+## Some cleaning for benchmarking
+
+The `%<-%` operator in zeallot brings a bit of overhead. So elimate that first,
+code is shown in the next slides. It is not really important and only shown for
+completeness, the unpacking is just done manually.
+
+## In R code (2)
+
+```{r, echo = TRUE}
+solve <- function(partialSolution, choicesFUN) {
+  # Eliminate impossible values, give some suggestions
+  # and flag contradictions.
+  elStep <- eliminate(partialSolution, choicesFUN)
+  # If dead end FALSE to trace back, if finshed TRUE.
+  if (elStep[[3]]) return(list(res = FALSE, sol = NULL))
+  if (all(elStep[[1]] %in% 1:9))
+    return(list(res = TRUE, sol = elStep[[1]]))
+  # Branching, exit when the solution is found.
+  for (suggestion in elStep[[2]]) {
+    ans <- solve(suggestion, choicesFUN)
+    if (ans$res) return(ans)
+  }
+  list(res = FALSE, sol = NULL)
+}
+```
+
+## R Implementation - `eliminate()` (2)
+
+```{r, echo = TRUE}
+eliminate <- function(grid, choicesFUN) {
+  suggestions <- 0:9
+  for (i in 1:nrow(grid)) { for (j in 1:ncol(grid)) {
+    if (grid[i, j] == 0L) {
+      choices <- choicesFUN(grid, i, j)
+      if (length(choices) == 0L) {
+        return(list(NULL, NULL, TRUE))
+      } else if (length(choices) == 1L) {
+        grid[i, j] <- choices
+        return(list(grid, list(grid), FALSE))
+      } else
+        suggestions <- updateSuggestions(
+          choices, grid, i, j, suggestions)
+    }
+  }}
+  list(grid, suggestions, FALSE)
+}
+```
 
 ## Some benchmarking
 ```{r, echo = TRUE}
