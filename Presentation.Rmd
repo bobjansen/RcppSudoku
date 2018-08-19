@@ -132,18 +132,12 @@ eliminate <- function(grid, choicesFUN) {
 
 ```{r, echo = TRUE}
 # Find the choices allowed by the rules.
-findChoices <- function(grid, i, j)
+findChoices <- function(grid, i, j) {
   1:9 %>% setdiff(grid[i, ]) %>%
     setdiff(grid[ , j]) %>%
     setdiff(grid[i - (i - 1) %% 3L + 0:2, 
                  j - (j - 1) %% 3L + 0:2])
-findChoices2 <- function(grid, i, j)
-  setdiff(
-    setdiff(setdiff(1:9, 
-                    grid[i, ]), 
-            grid[ , j]),
-    grid[i - (i - 1) %% 3L + 0:2, 
-         j - (j - 1) %% 3L + 0:2])
+}
 # Create a new grid with suggested next moves.
 updateSuggestions <- function(choices, grid, i, j,
                               lastBest) {
@@ -192,4 +186,20 @@ sudoku <- as.matrix(
 # solution <- solve(sudoku)
 # if (!solution[[1]]) { cat('Solution not found\n')
 # } else { print(as.data.frame(solution[[2]])) }
+```
+
+## Some benchmarking
+
+Benchmarking not so easy due to recursion.
+
+## Some benchmarking
+```{r, echo = TRUE}
+findChoices2 <- function(grid, i, j) {
+  setdiff(
+    setdiff(setdiff(1:9,
+                    grid[i, ]),
+            grid[ , j]),
+    grid[i - (i - 1) %% 3L + 0:2,
+         j - (j - 1) %% 3L + 0:2])
+}
 ```
